@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Calendar, MapPin, Heart, Activity, Droplet, Weight, Ruler, Pill, FileText, Clock, Edit2, Camera, AlertCircle, CheckCircle, Download, Eye } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000/api';
+import Navbar from './Navbar';
 
 export default function MedicalProfile() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -910,9 +911,10 @@ export default function MedicalProfile() {
                     </button>
                   )}
                 </div>
+               <a href="/bookconsultation">
                 <button className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-semibold">
                   Book New Consultation
-                </button>
+                </button></a>
               </div>
             )}
           </div>

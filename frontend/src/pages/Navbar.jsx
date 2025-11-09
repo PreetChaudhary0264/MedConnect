@@ -59,13 +59,15 @@ export default function Navbar() {
             </div>
            
             <div className="hidden md:flex items-center space-x-8">
+              <a href="/" className="text-slate-700 hover:text-blue-600 transition font-medium">Home</a>
               <a href="/about" className="text-slate-700 hover:text-blue-600 transition font-medium">About</a>
-              <a href="/donate" className="block py-2 text-slate-700 hover:text-blue-600">Donate</a>
-              <a href="/medicines" className="block py-2 text-slate-700 hover:text-blue-600">Search Medicine</a>
+              <a href="/donate" className="text-slate-700 hover:text-blue-600 transition font-medium">Donate</a>
+              <a href="/medicines" className="text-slate-700 hover:text-blue-600 transition font-medium">Medicines</a>
+              <a href="/partner" className="text-slate-700 hover:text-blue-600 transition font-medium">Partner</a>
               <a href="/contact" className="text-slate-700 hover:text-blue-600 transition font-medium">Contact</a>
               {isLoggedIn ? (
                 <div 
-                  className="relative" 
+                  className="relative"  
                   onMouseEnter={handleMouseEnter} 
                   onMouseLeave={handleMouseLeave}
                 >
@@ -104,9 +106,10 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden bg-white border-t">
             <div className="px-4 py-4 space-y-3">
-              <a href="/features" className="block py-2 text-slate-700 hover:text-blue-600">Features</a>
               <a href="/about" className="block py-2 text-slate-700 hover:text-blue-600">About</a>
               <a href="/donate" className="block py-2 text-slate-700 hover:text-blue-600">Donate</a>
+              <a href="/medicines" className="block py-2 text-slate-700 hover:text-blue-600">Search Medicine</a>
+              <a href="/medicines" className="block py-2 text-slate-700 hover:text-blue-600">Partner</a>
               <a href="/contact" className="block py-2 text-slate-700 hover:text-blue-600">Contact</a>
               {isLoggedIn ? (
                 <>

@@ -9,6 +9,7 @@ import UserProfile from './pages/UserProfile';
 import Medicines from './pages/Avialablemedicine';
 // import Login from './pages/Login';
 import Signup from './pages/Signup'
+import BookConsultation from './pages/BookConsultation';
 
 export default function App() {
   return (
@@ -22,7 +23,7 @@ export default function App() {
         <Route path="/donate" element={<Donate />} />
         <Route path="/medicines" element={<Medicines />} />
         <Route path="/signup" element={<Signup />}/>
-        {/* <Route path="/login" element={<Login />}/> */}
+        <Route path="/bookconsultation" element={<BookConsultation />}/>
       </Routes>
   );
 }

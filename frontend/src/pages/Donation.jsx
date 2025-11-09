@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Heart, Upload, Calendar, MapPin, Pill, Package, Camera, ArrowRight, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000/api';
-
+import Navbar from './Navbar';
 export default function MedicineDonation() {
   const [formData, setFormData] = useState({
     medicineName: '',
@@ -102,28 +102,7 @@ export default function MedicineDonation() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      
-      {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-lg shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Heart className="w-7 h-7 text-white" fill="white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                MediConnect
-              </span>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <a href="/" className="text-slate-700 hover:text-blue-600 transition font-medium">
-                Back to Home
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
+     <Navbar />
 
       {/* Hero Section */}
       <section className="pt-12 pb-8 px-4 sm:px-6 lg:px-8">
