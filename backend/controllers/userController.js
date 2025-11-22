@@ -9,6 +9,7 @@ const getProfile = async (req, res) => {
     }
 
     // Calculate age from dateOfBirth
+    //check
     let age = null;
     if (user.dateOfBirth) {
       const today = new Date();
