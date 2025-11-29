@@ -60,12 +60,11 @@ export default function Navbar() {
            
             <div className="hidden md:flex items-center space-x-8">
               <a href="/" className="text-slate-700 hover:text-blue-600 transition font-medium">Home</a>
-              <a href="/about" className="text-slate-700 hover:text-blue-600 transition font-medium">About</a>
               <a href="/upload" className="text-slate-700 hover:text-blue-600 transition font-medium">Reports</a>
               <a href="/donate" className="text-slate-700 hover:text-blue-600 transition font-medium">Donate</a>
               <a href="/medicines" className="text-slate-700 hover:text-blue-600 transition font-medium">Medicines</a>
+              <a href="/camps" className="text-slate-700 hover:text-blue-600 transition font-medium">Camps</a>
               <a href="/partner" className="text-slate-700 hover:text-blue-600 transition font-medium">Partner</a>
-              <a href="/contact" className="text-slate-700 hover:text-blue-600 transition font-medium">Contact</a>
               {isLoggedIn ? (
                 <div 
                   className="relative"  
@@ -81,6 +80,8 @@ export default function Navbar() {
                   {showDropdown && (
                     <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-slate-200">
                       <a href="/profile" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Profile</a>
+                      <a href="/my-donations" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Donations</a>
+                      <a href="/contact" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Contact</a>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
@@ -107,17 +108,18 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden bg-white border-t">
             <div className="px-4 py-4 space-y-3">
-              <a href="/about" className="block py-2 text-slate-700 hover:text-blue-600">About</a>
               <a href="/donate" className="block py-2 text-slate-700 hover:text-blue-600">Donate</a>
               <a href="/medicines" className="block py-2 text-slate-700 hover:text-blue-600">Search Medicine</a>
-              <a href="/medicines" className="block py-2 text-slate-700 hover:text-blue-600">Partner</a>
-              <a href="/contact" className="block py-2 text-slate-700 hover:text-blue-600">Contact</a>
+              <a href="/camps" className="block py-2 text-slate-700 hover:text-blue-600">Health Camps</a>
+              <a href="/partner" className="block py-2 text-slate-700 hover:text-blue-600">Partner</a>
               {isLoggedIn ? (
                 <>
                   <a href="/profile" className="block py-2 text-slate-700 hover:text-blue-600 flex items-center">
                     <User className="w-5 h-5 mr-2" />
                     Profile
                   </a>
+                  <a href="/my-donations" className="block py-2 text-slate-700 hover:text-blue-600">My Donations</a>
+                  <a href="/contact" className="block py-2 text-slate-700 hover:text-blue-600">Contact</a>
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left py-2 text-slate-700 hover:text-blue-600"

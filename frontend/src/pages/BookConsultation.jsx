@@ -1,12 +1,9 @@
-// bookconsultation.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Video, Search, Filter, Star, Award, TrendingUp, MapPin, Heart, ArrowRight, CheckCircle, X } from 'lucide-react';
+import Navbar from './Navbar';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-import Navbar from './Navbar'
-
-// Doctor Card Component
 const DoctorCard = ({ doctor, onBook }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-100 group">
@@ -14,45 +11,48 @@ const DoctorCard = ({ doctor, onBook }) => {
         <div className="flex items-start space-x-4 mb-4">
           <div className="relative">
             <img 
-              src={doctor.image} 
-              alt={doctor.name}
-              className="w-20 h-20 rounded-xl object-cover"
+              src={
+                doctor.image || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.fullName || 'Doctor')}&background=random&color=fff&size=80&bold=true&rounded=true`
+              } 
+              alt={doctor.fullName || 'Doctor'}
+              className="w-20 h-20 rounded-xl object-cover bg-indigo-100"
             />
             {doctor.available && (
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-slate-900 mb-1">{doctor.name}</h3>
-            <p className="text-blue-600 font-medium mb-2">{doctor.specialization}</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-1">{doctor.fullName || 'Dr. Unknown'}</h3>
+            <p className="text-blue-600 font-medium mb-2">{doctor.specialization || 'General'}</p>
             <div className="flex items-center space-x-3 text-sm">
               <div className="flex items-center text-yellow-500">
                 <Star className="w-4 h-4 fill-current" />
-                <span className="ml-1 font-semibold text-slate-900">{doctor.rating}</span>
+                <span className="ml-1 font-semibold text-slate-900">{doctor.rating || 'N/A'}</span>
               </div>
-              <span className="text-slate-500">{doctor.experience} years exp</span>
+              <span className="text-slate-500">{doctor.experience || 0} years exp</span>
             </div>
           </div>
         </div>
         
         <div className="flex items-center space-x-2 mb-4 text-sm text-slate-600">
           <MapPin className="w-4 h-4" />
-          <span>{doctor.location}</span>
+          <span>{doctor.location || 'Location not available'}</span>
         </div>
         
         <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
           <div>
             <p className="text-sm text-slate-600">Consultation Fee</p>
-            <p className="text-2xl font-bold text-slate-900">₹{doctor.fee}</p>
+            <p className="text-2xl font-bold text-slate-900">₹{doctor.fee || 0}</p>
           </div>
           <div className="text-right">
             <p className="text-sm text-slate-600">Next Available</p>
-            <p className="text-sm font-semibold text-blue-600">{doctor.nextAvailable}</p>
+            <p className="text-sm font-semibold text-blue-600">{doctor.nextAvailable || 'Today'}</p>
           </div>
         </div>
         
         <div className="flex flex-wrap gap-2 mb-4">
-          {doctor.expertise.slice(0, 3).map((skill, idx) => (
+          {(doctor.expertise || []).slice(0, 3).map((skill, idx) => (
             <span key={idx} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-medium">
               {skill}
             </span>
@@ -71,7 +71,6 @@ const DoctorCard = ({ doctor, onBook }) => {
   );
 };
 
-// Booking Modal Component
 const BookingModal = ({ doctor, onClose, onConfirm }) => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -100,17 +99,22 @@ const BookingModal = ({ doctor, onClose, onConfirm }) => {
         </div>
         
         <div className="p-6 space-y-6">
-          {/* Doctor Info */}
           <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
-            <img src={doctor.image} alt={doctor.name} className="w-16 h-16 rounded-xl object-cover" />
+            <img 
+              src={
+                doctor.image || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.fullName || 'Doctor')}&background=random&color=fff&size=64&bold=true&rounded=true`
+              } 
+              alt={doctor.fullName} 
+              className="w-16 h-16 rounded-xl object-cover bg-indigo-100" 
+            />
             <div>
-              <h3 className="font-bold text-slate-900">{doctor.name}</h3>
+              <h3 className="font-bold text-slate-900">{doctor.fullName}</h3>
               <p className="text-blue-600 text-sm">{doctor.specialization}</p>
               <p className="text-slate-600 text-sm">₹{doctor.fee} consultation fee</p>
             </div>
           </div>
 
-          {/* Consultation Type */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-3">Consultation Type</label>
             <div className="grid grid-cols-2 gap-4">
@@ -139,7 +143,6 @@ const BookingModal = ({ doctor, onClose, onConfirm }) => {
             </div>
           </div>
 
-          {/* Date Selection */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-3">Select Date</label>
             <input
@@ -151,7 +154,6 @@ const BookingModal = ({ doctor, onClose, onConfirm }) => {
             />
           </div>
 
-          {/* Time Selection */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-3">Select Time</label>
             <div className="grid grid-cols-4 gap-2">
@@ -171,7 +173,6 @@ const BookingModal = ({ doctor, onClose, onConfirm }) => {
             </div>
           </div>
 
-          {/* Symptoms */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-3">Describe Your Symptoms (Optional)</label>
             <textarea
@@ -183,14 +184,13 @@ const BookingModal = ({ doctor, onClose, onConfirm }) => {
             />
           </div>
 
-          {/* Confirm Button */}
           <button
             onClick={handleConfirm}
             disabled={!selectedDate || !selectedTime}
             className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            Confirm Booking
-            <CheckCircle className="ml-2 w-5 h-5" />
+            Proceed to Payment
+            <ArrowRight className="ml-2 w-5 h-5" />
           </button>
         </div>
       </div>
@@ -198,7 +198,6 @@ const BookingModal = ({ doctor, onClose, onConfirm }) => {
   );
 };
 
-// Main Component
 export default function BookConsultation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialization, setSelectedSpecialization] = useState('All');
@@ -206,98 +205,55 @@ export default function BookConsultation() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [bookingDetails, setBookingDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const specializations = [
     'All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 
     'Orthopedic', 'Psychiatrist', 'General Physician'
   ];
 
-  const doctors = [
-    {
-      id: 1,
-      name: 'Dr. Sarah Johnson',
-      specialization: 'Cardiologist',
-      rating: 4.9,
-      experience: 15,
-      location: 'Apollo Hospital, Delhi',
-      fee: 800,
-      nextAvailable: 'Today, 3:00 PM',
-      available: true,
-      image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop',
-      expertise: ['Heart Surgery', 'ECG', 'Cardiac Care', 'Hypertension']
-    },
-    {
-      id: 2,
-      name: 'Dr. Rajesh Kumar',
-      specialization: 'Dermatologist',
-      rating: 4.8,
-      experience: 12,
-      location: 'Max Hospital, Mumbai',
-      fee: 600,
-      nextAvailable: 'Tomorrow, 10:00 AM',
-      available: true,
-      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop',
-      expertise: ['Skin Care', 'Acne Treatment', 'Cosmetic', 'Hair Loss']
-    },
-    {
-      id: 3,
-      name: 'Dr. Priya Sharma',
-      specialization: 'Pediatrician',
-      rating: 4.9,
-      experience: 10,
-      location: 'Fortis Hospital, Bangalore',
-      fee: 700,
-      nextAvailable: 'Today, 5:00 PM',
-      available: true,
-      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop',
-      expertise: ['Child Care', 'Vaccination', 'Newborn Care', 'Development']
-    },
-    {
-      id: 4,
-      name: 'Dr. Amit Patel',
-      specialization: 'Orthopedic',
-      rating: 4.7,
-      experience: 18,
-      location: 'AIIMS, Delhi',
-      fee: 900,
-      nextAvailable: 'Tomorrow, 11:00 AM',
-      available: false,
-      image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop',
-      expertise: ['Joint Surgery', 'Sports Injury', 'Fracture', 'Spine Care']
-    },
-    {
-      id: 5,
-      name: 'Dr. Meera Reddy',
-      specialization: 'Psychiatrist',
-      rating: 4.9,
-      experience: 14,
-      location: 'Manipal Hospital, Pune',
-      fee: 1000,
-      nextAvailable: 'Today, 6:00 PM',
-      available: true,
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
-      expertise: ['Depression', 'Anxiety', 'Counseling', 'Therapy']
-    },
-    {
-      id: 6,
-      name: 'Dr. Vikram Singh',
-      specialization: 'General Physician',
-      rating: 4.6,
-      experience: 8,
-      location: 'City Hospital, Jaipur',
-      fee: 500,
-      nextAvailable: 'Today, 2:00 PM',
-      available: true,
-      image: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=400&fit=crop',
-      expertise: ['General Health', 'Fever', 'Diabetes', 'Blood Pressure']
-    }
-  ];
+  const [doctors, setDoctors] = useState([]);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/doctors`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch doctors');
+        }
+        const data = await response.json();
+        setDoctors(data.doctors || []);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+        setDoctors([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const filteredDoctors = doctors.filter(doctor => {
-    const matchesSearch = doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doctor.specialization.toLowerCase().includes(searchQuery.toLowerCase());
+    const name = (doctor.fullName || '').toLowerCase();
+    const specialization = (doctor.specialization || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+
+    const matchesSearch = name.includes(query) || specialization.includes(query);
     const matchesSpecialization = selectedSpecialization === 'All' || 
                                  doctor.specialization === selectedSpecialization;
+
     return matchesSearch && matchesSpecialization;
   });
 
@@ -310,73 +266,85 @@ export default function BookConsultation() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('No authentication token found. Please login again.');
+        alert('Please login to book consultation');
         return;
       }
 
-      // Fetch current profile
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+      const orderResponse = await fetch(`${API_BASE_URL}/payment/create-order`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          amount: details.doctor.fee,
+          doctorId: details.doctor._id,
+          date: details.date,
+          time: details.time,
+          consultationType: details.type,
+          symptoms: details.symptoms
+        }),
       });
 
-      if (!response.ok) {
-        let errorMessage = 'Failed to fetch profile';
-        try {
-          const errData = await response.json();
-          errorMessage = errData.message || errorMessage;
-        } catch {
-          // If can't parse JSON, use default
-        }
-        throw new Error(errorMessage);
+      if (!orderResponse.ok) {
+        throw new Error('Failed to create order');
       }
 
-      const data = await response.json();
-      const profile = data.profile;
-      const currentConsultations = profile.consultations || [];
+      const orderData = await orderResponse.json();
 
-      // Format date as dd/mm/yyyy time
-      const formattedDate = new Date(details.date).toLocaleDateString('en-GB') + ' ' + details.time;
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.orderId,
+        name: 'MedConnect',
+        description: `Consultation with ${details.doctor.fullName}`,
+        handler: async function (response) {
+          try {
+            const verifyResponse = await fetch(`${API_BASE_URL}/payment/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                doctorId: details.doctor._id,
+                date: details.date,
+                time: details.time,
+                consultationType: details.type,
+                symptoms: details.symptoms
+              }),
+            });
 
-      const newConsultation = {
-        doctor: details.doctor.name,
-        specialization: details.doctor.specialization,
-        date: formattedDate,
-        status: 'Upcoming'
+            if (!verifyResponse.ok) {
+              throw new Error('Payment verification failed');
+            }
+
+            setBookingDetails(details);
+            setShowBookingModal(false);
+            setShowConfirmation(true);
+            setTimeout(() => setShowConfirmation(false), 5000);
+          } catch (err) {
+            alert(`Booking failed: ${err.message}`);
+          }
+        },
+        prefill: {
+          name: '',
+          email: '',
+          contact: ''
+        },
+        theme: {
+          color: '#3B82F6'
+        }
       };
 
-      const updatedConsultations = [...currentConsultations, newConsultation];
-
-      // Update profile with new consultations
-      const updateResponse = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ consultations: updatedConsultations }),
-      });
-
-      if (!updateResponse.ok) {
-        let errorMessage = 'Failed to book consultation';
-        try {
-          const errData = await updateResponse.json();
-          errorMessage = errData.message || errorMessage;
-        } catch {
-          // If can't parse JSON, use default
-        }
-        throw new Error(errorMessage);
-      }
-
-      // Show confirmation
-      setBookingDetails(details);
-      setShowBookingModal(false);
-      setShowConfirmation(true);
-      setTimeout(() => setShowConfirmation(false), 5000);
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      alert(`Booking failed: ${err.message}`);
+      alert(`Payment failed: ${err.message}`);
     }
   };
 
@@ -384,7 +352,6 @@ export default function BookConsultation() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Navbar />
       
-      {/* Hero Section */}
       <section className="pt-32 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full text-blue-700 font-medium mb-6">
@@ -404,11 +371,9 @@ export default function BookConsultation() {
         </div>
       </section>
 
-      {/* Search and Filter Section */}
       <section className="pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
-            {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
@@ -420,7 +385,6 @@ export default function BookConsultation() {
               />
             </div>
 
-            {/* Specialization Filters */}
             <div className="flex items-center space-x-2 overflow-x-auto pb-2">
               <Filter className="w-5 h-5 text-slate-600 flex-shrink-0" />
               {specializations.map((spec) => (
@@ -441,7 +405,6 @@ export default function BookConsultation() {
         </div>
       </section>
 
-      {/* Doctors Grid */}
       <section className="pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -449,18 +412,25 @@ export default function BookConsultation() {
               Available Doctors ({filteredDoctors.length})
             </h2>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredDoctors.map((doctor) => (
-              <DoctorCard 
-                key={doctor.id} 
-                doctor={doctor} 
-                onBook={handleBookAppointment}
-              />
-            ))}
-          </div>
 
-          {filteredDoctors.length === 0 && (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <p className="mt-4 text-slate-600">Loading doctors...</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredDoctors.map((doctor) => (
+                <DoctorCard 
+                  key={doctor.id || doctor._id} 
+                  doctor={doctor} 
+                  onBook={handleBookAppointment}
+                />
+              ))}
+            </div>
+          )}
+
+          {!loading && filteredDoctors.length === 0 && (
             <div className="text-center py-20">
               <p className="text-xl text-slate-600">No doctors found matching your criteria.</p>
             </div>
@@ -468,7 +438,6 @@ export default function BookConsultation() {
         </div>
       </section>
 
-      {/* Booking Modal */}
       {showBookingModal && selectedDoctor && (
         <BookingModal
           doctor={selectedDoctor}
@@ -477,7 +446,6 @@ export default function BookConsultation() {
         />
       )}
 
-      {/* Confirmation Toast */}
       {showConfirmation && bookingDetails && (
         <div className="fixed bottom-8 right-8 bg-white rounded-2xl shadow-2xl p-6 max-w-md border-2 border-green-500 animate-slide-up z-50">
           <div className="flex items-start space-x-4">
@@ -487,10 +455,10 @@ export default function BookConsultation() {
             <div>
               <h3 className="font-bold text-slate-900 mb-1">Booking Confirmed!</h3>
               <p className="text-sm text-slate-600 mb-2">
-                Your consultation with {bookingDetails.doctor.name} is confirmed
+                Your consultation with <strong>{bookingDetails.doctor.fullName}</strong> is confirmed
               </p>
               <p className="text-sm font-semibold text-blue-600">
-                {bookingDetails.date} at {bookingDetails.time}
+                {new Date(bookingDetails.date).toLocaleDateString('en-GB')} at {bookingDetails.time}
               </p>
             </div>
           </div>

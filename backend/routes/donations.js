@@ -1,33 +1,9 @@
-// routes/donations.js - New routes for donations
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
 const MedicineDonation = require('../models/MedicineDonation');
 const { protect } = require('../middleware/auth');
+const { upload } = require('../config/cloudinary');
 
 const router = express.Router();
-
-// Multer configuration for file upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Create 'uploads' folder in root
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
-  }
-});
 
 // @desc    Create new donation
 // @route   POST /api/donations
@@ -35,7 +11,7 @@ const upload = multer({
 router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
     const { medicineName, units, quantity, expiryDate, address, demand } = req.body;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const imageUrl = req.file ? req.file.path : null;
 
     // Validate expiry date (at least 3 months from now)
     const today = new Date();
@@ -75,10 +51,12 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const donations = await MedicineDonation.find({ status: { $ne: 'delivered' } }) // Show only non-delivered
+    const donations = await MedicineDonation.find({ status: { $ne: 'delivered' } })
       .populate('user', 'fullName email phone')
+      .populate('assignedVolunteer', 'name phone')
+      .populate('assignedNGO', 'name')
       .sort({ createdAt: -1 })
-      .limit(50); // Limit for performance
+      .limit(50);
 
     res.status(200).json({
       success: true,
@@ -88,6 +66,28 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Get donations error:', error);
     res.status(500).json({ message: 'Server error while fetching donations' });
+  }
+});
+
+// @desc    Get user's donations
+// @route   GET /api/donations/my-donations
+// @access  Private
+router.get('/my-donations', protect, async (req, res) => {
+  try {
+    console.log('Fetching donations for user:', req.user.id);
+    const donations = await MedicineDonation.find({ user: req.user.id })
+      .populate('assignedVolunteer', 'name phone email')
+      .populate('assignedNGO', 'name phone')
+      .sort({ createdAt: -1 });
+    
+    console.log('Found donations:', donations.length);
+    res.status(200).json({
+      success: true,
+      donations
+    });
+  } catch (error) {
+    console.error('Get my donations error:', error);
+    res.status(500).json({ message: 'Server error while fetching your donations' });
   }
 });
 

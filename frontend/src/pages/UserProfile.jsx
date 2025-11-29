@@ -1,8 +1,9 @@
-// Updated UserProfile.jsx - Added date picker for DOB, document upload with view/download, ensured medical history fetches from DB
+// Updated UserProfile.jsx - Fixed doctor name from fullName in DB
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, MapPin, Heart, Activity, Droplet, Weight, Ruler, Pill, FileText, Clock, Edit2, Camera, AlertCircle, CheckCircle, Download, Eye } from 'lucide-react';
+import { User, Mail, Phone, Calendar, MapPin, Heart, Activity, Droplet, Weight, Ruler, Pill, FileText, Clock, Edit2, Camera, AlertCircle, CheckCircle, Download, Eye, Video, ImageOff } from 'lucide-react';
+import VideoCall from '../components/VideoCall';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL; // Adjust if backend URL is different
 import Navbar from './Navbar';
 
 export default function MedicalProfile() {
@@ -10,6 +11,10 @@ export default function MedicalProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [currentCallRoom, setCurrentCallRoom] = useState(null);
+  const [currentCallDoctor, setCurrentCallDoctor] = useState(null);
+  const [bookings, setBookings] = useState([]);
   const [profileData, setProfileData] = useState({
     personal: {
       name: '',
@@ -69,9 +74,31 @@ export default function MedicalProfile() {
   // Consultation status options
   const statusOptions = [
     { value: '', label: 'Select Status' },
+    { value: 'Upcoming', label: 'Upcoming' },
+    { value: 'Confirmed', label: 'Confirmed' },
     { value: 'Completed', label: 'Completed' },
-    { value: 'Upcoming', label: 'Upcoming' }
+    { value: 'Cancelled', label: 'Cancelled' }
   ];
+
+  // Fetch bookings
+  const fetchBookings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const response = await fetch(`${API_BASE_URL}/bookings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBookings(data.bookings || []);
+      }
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+    }
+  };
 
   // Fetch profile data
   const fetchProfile = async () => {
@@ -102,6 +129,13 @@ export default function MedicalProfile() {
       const dobDate = profile.dateOfBirth ? new Date(profile.dateOfBirth) : null;
       const dateOfBirth = dobDate ? dobDate.toLocaleDateString('en-GB') : '';
       const dateOfBirthIso = dobDate ? dobDate.toISOString().split('T')[0] : '';
+      
+      // Map consultations properly - doctor name comes from fullName in DB
+      const consultations = (profile.consultations || []).map(c => ({
+        ...c,
+        doctor: c.doctor?.fullName || c.doctor || 'Unknown Doctor'
+      }));
+      
       setProfileData({
         personal: {
           name: profile.fullName || '',
@@ -127,7 +161,7 @@ export default function MedicalProfile() {
           nextAppointment: profile.nextAppointment || ''
         },
         documents: profile.documents || [],
-        consultations: profile.consultations || []
+        consultations: consultations
       });
     } catch (err) {
       setError(err.message);
@@ -163,11 +197,19 @@ export default function MedicalProfile() {
         throw new Error(errorMessage);
       }
       const data = await response.json();
+      
+          console.log('Profile data:', data);
       const profile = data.profile;
       const dobDate = profile.dateOfBirth ? new Date(profile.dateOfBirth) : null;
       const dateOfBirth = dobDate ? dobDate.toLocaleDateString('en-GB') : '';
       const dateOfBirthIso = dobDate ? dobDate.toISOString().split('T')[0] : '';
-      // Update local state with new data
+
+      // Again map fullName to doctor properly after update
+      const consultations = (profile.consultations || []).map(c => ({
+        ...c,
+        doctor: c?.fullName || c.doctor || 'Unknown Doctor'
+      }));
+
       setProfileData({
         personal: {
           name: profile.fullName || '',
@@ -193,7 +235,7 @@ export default function MedicalProfile() {
           nextAppointment: profile.nextAppointment || ''
         },
         documents: profile.documents || [],
-        consultations: profile.consultations || []
+        consultations: consultations
       });
       setIsEditing(false);
     } catch (err) {
@@ -203,7 +245,6 @@ export default function MedicalProfile() {
 
   // Handle save changes
   const handleSave = () => {
-    // Prepare updates from all sections, trim strings
     const trimValue = (val) => typeof val === 'string' ? val.trim() : val;
     const updates = {
       fullName: trimValue(profileData.personal.name),
@@ -261,7 +302,6 @@ export default function MedicalProfile() {
     } else {
       currentArray[index] = value;
     }
-    // Filter empty strings for simple arrays
     if (!subField) {
       const filtered = currentArray.filter(item => item && item.trim());
       setProfileData(prev => ({
@@ -391,6 +431,7 @@ export default function MedicalProfile() {
 
   useEffect(() => {
     fetchProfile();
+    fetchBookings();
   }, []);
 
   const maxDate = new Date().toISOString().split('T')[0];
@@ -417,6 +458,19 @@ export default function MedicalProfile() {
   }
 
   return (
+    <>
+      {showVideoCall && (
+        <VideoCall
+          roomId={currentCallRoom}
+          userName={profileData.personal.name}
+          userRole="patient"
+          onClose={() => {
+            setShowVideoCall(false);
+            setCurrentCallRoom(null);
+            setCurrentCallDoctor(null);
+          }}
+        />
+      )}
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 pt-20 pb-32 px-4 sm:px-6 lg:px-8">
@@ -846,10 +900,61 @@ export default function MedicalProfile() {
             )}
             {activeTab === 'consultations' && (
               <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Consultation History</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-6">My Bookings</h3>
                
                 <div className="space-y-4">
-                  {profileData.consultations.map((consultation, idx) => (
+                  {bookings.length === 0 ? (
+                    <p className="text-center text-slate-500 py-8">No bookings found</p>
+                  ) : (
+                    bookings.map((booking, idx) => (
+                    <div key={idx} className="p-6 bg-slate-50 rounded-xl hover:shadow-lg transition-all">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            {booking.doctor?.fullName?.split(' ')[1]?.[0] || 'D'}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-lg text-slate-900">{booking.doctor?.fullName || 'Doctor'}</p>
+                            <p className="text-sm text-slate-600">{booking.doctor?.specialization || 'Specialist'}</p>
+                            <p className="text-sm text-slate-500 mt-1">{booking.date} at {booking.time}</p>
+                            <p className="text-sm text-slate-500">{booking.consultationType} • {booking.symptoms}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                            <button
+                              onClick={() => {
+                                const roomId = `${booking.doctor?.fullName?.replace(/[^a-zA-Z0-9]/g, '')}_${booking.date?.replace(/[^a-zA-Z0-9]/g, '')}_${booking.doctor?.specialization?.replace(/[^a-zA-Z0-9]/g, '')}`;
+                                setCurrentCallRoom(roomId);
+                                setCurrentCallDoctor(booking.doctor?.fullName);
+                                setShowVideoCall(true);
+                              }}
+                              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-semibold"
+                            >
+                              <Video className="w-4 h-4" />
+                              <span>Join Call</span>
+                            </button>
+                          )}
+                          <span className={`px-4 py-2 rounded-full font-semibold ${
+                            booking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            booking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                            booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {booking.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                  )}
+                </div>
+
+                {profileData.consultations.length > 0 && (
+                  <>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-6 mt-8">Consultation History</h3>
+                    <div className="space-y-4">
+                      {profileData.consultations.map((consultation, idx) => (
                     <div key={idx} className="p-6 bg-slate-50 rounded-xl hover:shadow-lg transition-all">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -857,60 +962,98 @@ export default function MedicalProfile() {
                             {consultation.doctor.split(' ')[1]?.[0] || 'D'}
                           </div>
                           <div className="flex-1">
-                            <input
-                              value={consultation.doctor}
-                              onChange={(e) => handleTopLevelArrayChange('consultations', idx, 'doctor', e.target.value)}
-                              className={`font-semibold text-lg ${isEditing ? 'border-b border-slate-300 bg-transparent' : 'text-slate-900'}`}
-                              readOnly={!isEditing}
-                            />
-                            <p className="text-sm text-slate-600">
+                            {isEditing ? (
                               <input
-                                value={consultation.specialization}
-                                onChange={(e) => handleTopLevelArrayChange('consultations', idx, 'specialization', e.target.value)}
-                                className={`mr-2 ${isEditing ? 'border-b border-slate-300 bg-transparent' : ''}`}
-                                readOnly={!isEditing}
+                                value={consultation.doctor}
+                                onChange={(e) => handleTopLevelArrayChange('consultations', idx, 'doctor', e.target.value)}
+                                className="font-semibold text-lg border-b border-slate-300 bg-transparent w-full"
                               />
+                            ) : (
+                              <p className="font-semibold text-lg text-slate-900">{consultation.doctor}</p>
+                            )}
+                            <p className="text-sm text-slate-600">
+                              {isEditing ? (
+                                <input
+                                  value={consultation.specialization}
+                                  onChange={(e) => handleTopLevelArrayChange('consultations', idx, 'specialization', e.target.value)}
+                                  className="mr-2 border-b border-slate-300 bg-transparent w-full"
+                                />
+                              ) : (
+                                <span>{consultation.specialization}</span>
+                              )}
                             </p>
                             <p className="text-sm text-slate-500 mt-1">
-                              <input
-                                value={consultation.date}
-                                onChange={(e) => handleTopLevelArrayChange('consultations', idx, 'date', e.target.value)}
-                                className={`mr-2 ${isEditing ? 'border-b border-slate-300 bg-transparent' : ''}`}
-                                readOnly={!isEditing}
-                              />
+                              {isEditing ? (
+                                <input
+                                  value={consultation.date}
+                                  onChange={(e) => handleTopLevelArrayChange('consultations', idx, 'date', e.target.value)}
+                                  className="mr-2 border-b border-slate-300 bg-transparent w-full"
+                                />
+                              ) : (
+                                <span>{consultation.date}</span>
+                              )}
                             </p>
                           </div>
                         </div>
-                        <SelectField
-                          value={consultation.status}
-                          isEditing={isEditing}
-                          onChange={(value) => handleTopLevelArrayChange('consultations', idx, 'status', value)}
-                          options={statusOptions}
-                          className={`px-4 py-2 rounded-full font-semibold ${isEditing ? 'border border-slate-300' : consultation.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
-                        />
-                        {isEditing && (
-                          <button
-                            onClick={() => {
-                              const newConsults = profileData.consultations.filter((_, i) => i !== idx);
-                              setProfileData(prev => ({ ...prev, consultations: newConsults }));
-                            }}
-                            className="text-red-500 hover:text-red-700 ml-4"
-                          >
-                            Remove
-                          </button>
-                        )}
+                        <div className="flex items-center space-x-3">
+                          {!isEditing && (consultation.status === 'Upcoming' || consultation.status === 'Confirmed' || consultation.status === 'pending' || consultation.status === 'confirmed') && (
+                            <button
+                              onClick={() => {
+                                const roomId = `${consultation.doctor.replace(/[^a-zA-Z0-9]/g, '')}_${consultation.date.replace(/[^a-zA-Z0-9]/g, '')}_${consultation.specialization.replace(/[^a-zA-Z0-9]/g, '')}`;
+                                setCurrentCallRoom(roomId);
+                                setCurrentCallDoctor(consultation.doctor);
+                                setShowVideoCall(true);
+                              }}
+                              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-semibold"
+                            >
+                              <Video className="w-4 h-4" />
+                              <span>Join Call</span>
+                            </button>
+                          )}
+                          {isEditing ? (
+                            <SelectField
+                              value={consultation.status}
+                              isEditing={isEditing}
+                              onChange={(value) => handleTopLevelArrayChange('consultations', idx, 'status', value)}
+                              options={statusOptions}
+                              className="px-4 py-2 rounded-full font-semibold border border-slate-300"
+                            />
+                          ) : (
+                            <span className={`px-4 py-2 rounded-full font-semibold ${
+                              consultation.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              consultation.status === 'Confirmed' ? 'bg-blue-100 text-blue-800' :
+                              consultation.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {consultation.status}
+                            </span>
+                          )}
+                          {isEditing && (
+                            <button
+                              onClick={() => {
+                                const newConsults = profileData.consultations.filter((_, i) => i !== idx);
+                                setProfileData(prev => ({ ...prev, consultations: newConsults }));
+                              }}
+                              className="text-red-500 hover:text-red-700 ml-4"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                  {isEditing && (
-                    <button
-                      onClick={() => setProfileData(prev => ({ ...prev, consultations: [...prev.consultations, { doctor: '', specialization: '', date: '', status: '' }] }))}
-                      className="w-full p-4 bg-white text-blue-600 rounded-lg font-medium border border-blue-300"
-                    >
-                      Add Consultation
-                    </button>
-                  )}
-                </div>
+                      ))}
+                      {isEditing && (
+                        <button
+                          onClick={() => setProfileData(prev => ({ ...prev, consultations: [...prev.consultations, { doctor: '', specialization: '', date: '', status: '' }] }))}
+                          className="w-full p-4 bg-white text-blue-600 rounded-lg font-medium border border-blue-300"
+                        >
+                          Add Consultation
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
                <a href="/bookconsultation">
                 <button className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-semibold">
                   Book New Consultation
@@ -921,6 +1064,7 @@ export default function MedicalProfile() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

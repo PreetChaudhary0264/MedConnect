@@ -1,37 +1,34 @@
-// controllers/userController.js - Full controller with getProfile, updateProfile, and new uploadDocument
-const User = require('../models/User');
+// controllers/userController.js  →  अब ये User + Booking दोनों का काम करेगा
 
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+
+// ====================== USER PROFILE ======================
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await User.findById(req.user.id)
+      .select('-password')
+      .lean();
 
-    // Calculate age from dateOfBirth
-    //check
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
     let age = null;
     if (user.dateOfBirth) {
       const today = new Date();
-      const birthDate = new Date(user.dateOfBirth);
-      age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
+      const birth = new Date(user.dateOfBirth);
+      age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
       age = `${age} years`;
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
-      profile: {
-        ...user._doc,
-        age
-      }
+      profile: { ...user, age, consultations: user.consultations || [] }
     });
   } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Server error while fetching profile' });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -41,75 +38,121 @@ const updateProfile = async (req, res) => {
       req.user.id,
       req.body,
       { new: true, runValidators: true }
-    ).select('-password');
+    ).select('-password').lean();
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Recalculate age
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    console.log(user);
     let age = null;
     if (user.dateOfBirth) {
       const today = new Date();
-      const birthDate = new Date(user.dateOfBirth);
-      age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
+      const birth = new Date(user.dateOfBirth);
+      age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
       age = `${age} years`;
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
-      profile: {
-        ...user._doc,
-        age
-      }
+      profile: { ...user, age, consultations: user.consultations || [] }
     });
   } catch (error) {
-    console.error('Update profile error:', error);
-    // If it's a validation error, handle specifically
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(val => val.message);
-      return res.status(400).json({ message: messages.join(', ') });
-    }
-    res.status(500).json({ message: 'Server error while updating profile' });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+const getDoctors = async (req, res) => {
+  try {
+    const doctors = await User.find({ role: 'doctor' }).select('-password');
+    res.json({ success: true, doctors });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ====================== BOOKING (अब यही पर है) ======================
+
+const createBooking = async (req, res) => {
+  try {
+    const { doctorId, date, time, consultationType, symptoms } = req.body;
+
+    if (!doctorId || !date || !time) {
+      return res.status(400).json({ message: 'Doctor, date and time required' });
+    }
+
+    const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
+    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+    // अगर doctor का hospitalId नहीं है तो भी booking चलेगी (optional बना दिया)
+    const hospitalId = doctor.hospitalId || null;
+
+    // Create booking
+    const booking = await Booking.create({
+      patient: req.user.id,
+      doctor: doctorId,
+      hospital: hospitalId,
+      date,
+      time,
+      consultationType: consultationType || 'video',
+      symptoms: symptoms || '',
+    });
+
+    // Patient के profile में consultation entry डाल दो
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: {
+        consultations: {
+          doctor: doctor.fullName,
+          specialization: doctor.specialization || 'General Physician',
+          date: `${date} ${time}`,
+          status: 'Upcoming'
+        }
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Booking successful',
+      booking
+    });
+
+  } catch (error) {
+    console.error('Booking Error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+const getMyBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ patient: req.user.id })
+      .populate('doctor', 'fullName specialization image fee')
+      .populate('hospital', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, bookings });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ====================== DOCUMENT UPLOAD ======================
 const uploadDocument = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const { name, date, type } = req.body;
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    if (!name || !date || !type) {
-      return res.status(400).json({ message: 'Name, date, and type are required' });
-    }
-
-    const url = `http://localhost:5000/uploads/${file.filename}`;
-
-    user.documents.push({ name: name.trim(), date: date.trim(), type: type.trim(), url });
-    await user.save();
-
-    res.status(201).json({ success: true, url });
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    const url = req.file.path;
+    res.json({ success: true, url });
   } catch (error) {
-    console.error('Upload document error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('Upload Error:', error);
+    res.status(500).json({ message: 'Upload failed' });
   }
 };
 
+// ====================== EXPORT ======================
 module.exports = {
   getProfile,
   updateProfile,
+  getDoctors,
+  createBooking,
+  getMyBookings,
   uploadDocument
 };

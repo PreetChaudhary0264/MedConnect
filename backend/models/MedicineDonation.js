@@ -44,6 +44,16 @@ const medicineDonationSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'approved', 'collected', 'delivered'],
     default: 'pending'
+  },
+  assignedVolunteer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Volunteer',
+    default: null
+  },
+  assignedNGO: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'NGO',
+    default: null
   }
 }, { timestamps: true });
 

@@ -32,10 +32,10 @@ export default function HealthcareLanding() {
     }
   ];
   const stats = [
-    { number: "70%", label: "Reduced Travel Time" },
-    { number: "50%", label: "Less Waiting Time" },
-    { number: "24/7", label: "Healthcare Access" },
-    { number: "1:10k", label: "Doctor-Patient Ratio in India" }
+    { number: "500+", label: "Doctors" },
+    { number: "50+", label: "Hospitals" },
+    { number: "100+", label: "NGOs" },
+    { number: "10k+", label: "Patients" }
   ];
   const benefits = [
     "Integrated platform connecting patients, doctors, hospitals, and NGOs",
@@ -77,9 +77,11 @@ export default function HealthcareLanding() {
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
                 </a>
+                <a href="/about" target="_blank" rel="noopener noreferrer">
                 <button className="px-8 py-4 bg-white text-slate-700 rounded-xl hover:shadow-xl transition-all duration-300 font-semibold text-lg border-2 border-slate-200">
                   Learn More
                 </button>
+                </a>
               </div>
             </div>
             <div className="relative">

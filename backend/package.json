@@ -15,6 +15,7 @@
     "@huggingface/inference": "^4.13.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -23,10 +24,12 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
     "nanoid": "^5.1.6",
     "nodemon": "^3.1.10",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^5.4.394",
+    "razorpay": "^2.9.6",
     "tesseract.js": "^6.0.1"
   }
 }

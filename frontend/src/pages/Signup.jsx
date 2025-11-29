@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Heart, Mail, Lock, User, Phone, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:5001/api'; // Adjust if backend URL is different
+const API_BASE_URL = import.meta.env.VITE_API_URL; // Adjust if backend URL is different
 
 export default function LoginSignup() {
   const [isLogin, setIsLogin] = useState(true);
@@ -275,7 +275,7 @@ export default function LoginSignup() {
                     <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-slate-300" />
                     <span className="text-sm text-slate-600">Remember me</span>
                   </label>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  <a href="/reset-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                     Forgot Password?
                   </a>
                 </div>

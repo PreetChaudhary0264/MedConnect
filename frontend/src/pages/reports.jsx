@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchReports } from "../utils/api";
 import { Link } from "react-router-dom";
+import Navbar from "./Navbar";
 import "../styles/reports.css";
 
 export default function Reports() {
@@ -23,7 +24,9 @@ export default function Reports() {
   }, []);
 
   return (
-    <div className="reports-container">
+    <>
+      <Navbar />
+      <div className="reports-container">
       <h2>Your Reports</h2>
       {reports.length === 0 ? (
         <p>No reports uploaded yet.</p>
@@ -56,7 +59,8 @@ export default function Reports() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

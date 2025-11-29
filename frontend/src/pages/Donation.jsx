@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Heart, Upload, Calendar, MapPin, Pill, Package, Camera, ArrowRight, CheckCircle, AlertCircle, X } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 import Navbar from './Navbar';
 export default function MedicineDonation() {
   const [formData, setFormData] = useState({

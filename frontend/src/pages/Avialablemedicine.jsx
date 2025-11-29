@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Search, Filter, MapPin, Calendar, Package, Pill, User, Phone, ArrowRight, X, SlidersHorizontal, Loader2 } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 import Navbar from './Navbar';
 export default function MedicineSearch() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,8 +33,10 @@ export default function MedicineSearch() {
           location: donation.address,
           phone: donation.user.phone,
           instructions: donation.demand,
-          image: donation.imageUrl ? `${API_BASE_URL.replace('/api', '')}${donation.imageUrl}` : 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop'
-          
+          status: donation.status,
+          assignedVolunteer: donation.assignedVolunteer,
+          assignedNGO: donation.assignedNGO,
+          image: donation.imageUrl || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop'
         }));
         
 
@@ -63,7 +65,7 @@ export default function MedicineSearch() {
                          med.location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = selectedFilter === 'all' || 
                          med.units.toLowerCase().includes(selectedFilter.toLowerCase());
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && med.status !== 'delivered';
   });
 
   const getExpiryStatus = (expiryDate) => {
@@ -210,6 +212,11 @@ export default function MedicineSearch() {
                         <User className="w-4 h-4" />
                         <span>Donated by {medicine.donor}</span>
                       </div>
+                      {medicine.assignedNGO && (
+                        <div className="mt-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold inline-block">
+                          Managed by {medicine.assignedNGO.name}
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -236,7 +243,7 @@ export default function MedicineSearch() {
                       onClick={() => setSelectedMedicine(medicine)}
                       className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-semibold flex items-center justify-center group"
                     >
-                      Contact Donor
+                      {medicine.assignedNGO ? 'Contact NGO' : 'Contact Donor'}
                       <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
@@ -264,7 +271,9 @@ export default function MedicineSearch() {
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-8">
               <div className="flex justify-between items-start mb-6">
-                <h2 className="text-3xl font-bold text-slate-900">Contact Donor</h2>
+                <h2 className="text-3xl font-bold text-slate-900">
+                  {selectedMedicine.assignedNGO ? 'Contact NGO' : 'Contact Donor'}
+                </h2>
                 <button
                   onClick={() => setSelectedMedicine(null)}
                   className="p-2 hover:bg-slate-100 rounded-lg transition"
@@ -296,13 +305,60 @@ export default function MedicineSearch() {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-slate-500">Contact Number</p>
-                      <p className="font-semibold text-slate-900">{selectedMedicine.phone}</p>
+                  {selectedMedicine.assignedNGO ? (
+                    <>
+                      <div className="border-t pt-4">
+                        <p className="text-sm font-semibold text-green-700 mb-3">Managed by NGO</p>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <User className="w-5 h-5 text-green-600" />
+                            <div>
+                              <p className="text-sm text-slate-500">NGO Name</p>
+                              <p className="font-semibold text-slate-900">{selectedMedicine.assignedNGO.name}</p>
+                            </div>
+                          </div>
+                          {selectedMedicine.assignedNGO.phone && (
+                            <div className="flex items-center space-x-3">
+                              <Phone className="w-5 h-5 text-green-600" />
+                              <div>
+                                <p className="text-sm text-slate-500">NGO Contact</p>
+                                <p className="font-semibold text-slate-900">{selectedMedicine.assignedNGO.phone}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {selectedMedicine.assignedVolunteer && (
+                        <div className="border-t pt-4">
+                          <p className="text-sm font-semibold text-blue-700 mb-3">Assigned Volunteer</p>
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-3">
+                              <User className="w-5 h-5 text-blue-600" />
+                              <div>
+                                <p className="text-sm text-slate-500">Volunteer Name</p>
+                                <p className="font-semibold text-slate-900">{selectedMedicine.assignedVolunteer.name}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <Phone className="w-5 h-5 text-blue-600" />
+                              <div>
+                                <p className="text-sm text-slate-500">Volunteer Contact</p>
+                                <p className="font-semibold text-slate-900">{selectedMedicine.assignedVolunteer.phone}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center space-x-3">
+                      <Phone className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm text-slate-500">Contact Number</p>
+                        <p className="font-semibold text-slate-900">{selectedMedicine.phone}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex items-start space-x-3">
                     <MapPin className="w-5 h-5 text-blue-600 mt-1" />
@@ -328,13 +384,13 @@ export default function MedicineSearch() {
 
                 <div className="flex gap-4">
                   <a
-                    href={`tel:${selectedMedicine.phone}`}
+                    href={`tel:${selectedMedicine.assignedVolunteer?.phone || selectedMedicine.assignedNGO?.phone || selectedMedicine.phone}`}
                     className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-semibold text-center"
                   >
-                    Call Donor
+                    Call {selectedMedicine.assignedNGO ? 'NGO' : 'Donor'}
                   </a>
                   <a
-                    href={`sms:${selectedMedicine.phone}`}
+                    href={`sms:${selectedMedicine.assignedVolunteer?.phone || selectedMedicine.assignedNGO?.phone || selectedMedicine.phone}`}
                     className="flex-1 px-6 py-4 bg-white border-2 border-blue-600 text-blue-600 rounded-xl hover:shadow-xl transition-all duration-300 font-semibold text-center"
                   >
                     Send SMS

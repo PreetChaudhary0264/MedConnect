@@ -30,6 +30,57 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't include in queries by default
   },
+  role: {
+    type: String,
+    enum: ['user', 'doctor'],
+    default: 'user'
+  },
+  hospitalId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hospital',
+    default: null
+  },
+  // Doctor specific fields
+  specialization: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  rating: {
+    type: Number,
+    default: null
+  },
+  experience: {
+    type: Number,
+    default: null
+  },
+  location: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  fee: {
+    type: Number,
+    default: null
+  },
+  nextAvailable: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  available: {
+    type: Boolean,
+    default: false
+  },
+  image: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  expertise: [{
+    type: String,
+    trim: true
+  }],
   // Personal Info
   dateOfBirth: {
     type: Date,
@@ -127,12 +178,12 @@ const userSchema = new mongoose.Schema({
     doctor: { type: String, required: true, trim: true },
     specialization: { type: String, required: true, trim: true },
     date: { type: String, required: true, trim: true },
-    status: { type: String, enum: ['Completed', 'Upcoming'], required: true }
+    status: { type: String, enum: ['Completed', 'Upcoming', 'Confirmed', 'Cancelled'], required: true }
   }]
 }, { timestamps: true });
 
 // Pre-save middleware to handle empty strings for enum fields
-userSchema.pre('save', function(next) {
+ userSchema.pre('save', async function(next) {
   // For enum fields, if empty string, set to null
   if (this.gender === '') this.gender = null;
   if (this.bloodGroup === '') this.bloodGroup = null;
@@ -151,19 +202,21 @@ userSchema.pre('save', function(next) {
   );
   this.consultations = this.consultations.filter(consult => 
     consult.doctor && consult.doctor.trim() && consult.specialization && consult.specialization.trim() && 
-    consult.date && consult.date.trim() && consult.status && ['Completed', 'Upcoming'].includes(consult.status)
+    consult.date && consult.date.trim() && consult.status && ['Completed', 'Upcoming', 'Confirmed', 'Cancelled'].includes(consult.status)
   );
 
   if (!this.isModified('password')) {
-    next();
-    return;
+    return next();
   }
-  bcrypt.genSalt(10).then(salt => {
-    bcrypt.hash(this.password, salt).then(hash => {
-      this.password = hash;
-      next();
-    });
-  }).catch(next);
+  try {
+    if (this.password && !this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Compare password method
