@@ -11,7 +11,7 @@ export const uploadReport = (file) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
-
+//fixed api connector
 export const fetchReports = () => api.get("/reports");
 export const fetchReport = (id) => api.get(`/reports/${id}`);
 export const fetchMessages = (reportId) => api.get(`/messages/${reportId}`);
