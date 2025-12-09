@@ -23,7 +23,7 @@ const VideoCall = ({ roomId, userName, userRole, onClose }) => {
         document.body.appendChild(script);
       });
     };
-
+  //ok
     const initializeJitsi = async () => {
       try {
         await loadJitsiScript();
