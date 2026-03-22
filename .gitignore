@@ -5,3 +5,31 @@ backend/node_modules/
 
 frontend/.env
 backend/.env
+
+# Dependencies
+node_modules/
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+/frontend/dist/
+/backend/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Package manager
+package-lock.json
+yarn.lock
